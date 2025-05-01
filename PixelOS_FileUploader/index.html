@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>File Upload</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(-45deg, #1f1c2c, #928DAB, #2C3E50, #4CA1AF);
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: white;
+    }
+
+    @keyframes gradient {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    .container {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 2rem;
+      border-radius: 1rem;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    input[type="file"] {
+      display: block;
+      margin: 1rem auto;
+    }
+
+    button {
+      padding: 0.8rem 2rem;
+      background-color: #00BCD4;
+      border: none;
+      color: white;
+      font-size: 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    #progress-container {
+      display: none;
+      margin-top: 1rem;
+    }
+
+    #progress-bar {
+      height: 20px;
+      background-color: #4CAF50;
+      width: 0%;
+      border-radius: 10px;
+    }
+
+    #lang-select {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(0,0,0,0.4);
+      color: white;
+      padding: 0.3rem;
+      border-radius: 5px;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <select id="lang-select"></select>
+  <div class="container">
+    <h2 id="title">Upload File</h2>
+    <form id="upload-form">
+      <input type="file" name="file" id="file-input" required>
+      <button type="submit" id="upload-btn">Upload</button>
+    </form>
+    <div id="progress-container">
+      <div id="progress-bar"></div>
+      <p id="progress-text">0%</p>
+    </div>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const translations = {
+      en: { title: "Upload File", upload: "Upload", uploading: "Uploading..." },
+      ru: { title: "Загрузка файла", upload: "Загрузить", uploading: "Загрузка..." },
+      es: { title: "Subir archivo", upload: "Subir", uploading: "Subiendo..." },
+      fr: { title: "Téléverser un fichier", upload: "Téléverser", uploading: "Téléversement..." },
+      de: { title: "Datei hochladen", upload: "Hochladen", uploading: "Wird hochgeladen..." },
+      zh: { title: "上传文件", upload: "上传", uploading: "正在上传..." },
+      ja: { title: "ファイルをアップロード", upload: "アップロード", uploading: "アップロード中..." },
+      it: { title: "Carica file", upload: "Carica", uploading: "Caricamento..." },
+      pt: { title: "Enviar arquivo", upload: "Enviar", uploading: "Enviando..." },
+      tr: { title: "Dosya Yükle", upload: "Yükle", uploading: "Yükleniyor..." }
+    };
+
+    const langSelect = document.getElementById("lang-select");
+    const userLang = navigator.language.slice(0,2);
+    const defaultLang = translations[userLang] ? userLang : 'en';
+
+    Object.keys(translations).forEach(lang => {
+      const option = document.createElement("option");
+      option.value = lang;
+      option.textContent = translations[lang].title;
+      if (lang === defaultLang) option.selected = true;
+      langSelect.appendChild(option);
+    });
+
+    function applyLanguage(lang) {
+      document.getElementById("title").textContent = translations[lang].title;
+      document.getElementById("upload-btn").textContent = translations[lang].upload;
+    }
+
+    langSelect.addEventListener("change", () => {
+      applyLanguage(langSelect.value);
+    });
+
+    applyLanguage(defaultLang);
+
+    document.getElementById("upload-form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const fileInput = document.getElementById("file-input");
+      if (!fileInput.files.length) return;
+
+      const lang = langSelect.value;
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/upload", true);
+
+      xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          document.getElementById("progress-bar").style.width = percent + "%";
+          document.getElementById("progress-text").textContent = percent + "%";
+        }
+      };
+
+      xhr.onloadstart = function() {
+        document.getElementById("progress-container").style.display = "block";
+        document.getElementById("result").textContent = "";
+      };
+
+      xhr.onload = function() {
+        document.getElementById("result").innerHTML = xhr.responseText;
+      };
+
+      xhr.send(formData);
+    });
+  </script>
+</body>
+</html>
